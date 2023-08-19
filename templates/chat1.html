@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
+    <style>
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .pdf {
+            width: 42%;
+            overflow: auto;
+            height: 100%;
+        }
+
+        .vertical-line {
+            width: 1%;
+            background-color: gray;
+            height: 100%;
+        }
+
+        .chats {
+            width: 42%;
+            height: 100%;
+        }
+
+        #sidebar {
+            width: 15%;
+            height: 100%;
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            overflow-y: scroll;
+        }
+
+        .upload-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #0074D9;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #0056a9;
+        }
+
+        #content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .pdf-link {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 20px;
+            padding: 5px;
+            transition: background-color 0.3s;
+            height: 30px;
+            padding-top: 15px;
+            border-radius: 3%;
+        }
+
+        .pdf-link:hover {
+            background-color: #555;
+        }
+
+        .pdf-link.active {
+            background-color: #0074D9;
+        }
+
+        .drop-container {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #ffffff;
+            color: #eee;
+            cursor: pointer;
+            transition: background .2s ease-in-out, border .2s ease-in-out;
+        }
+
+        .drop-container:hover {
+            border-color: #1855d8;
+        }
+
+        .drop-container:hover .drop-title {
+            color: #eee;
+        }
+
+        .drop-title {
+            color: #eee;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            transition: color .2s ease-in-out;
+        }
+
+        .chat-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            overflow-y: auto;
+            height: 500px;
+        }
+
+        /* Style the chat messages */
+        .chat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+
+        .incoming {
+            background-color: #f4f4f4;
+            align-self: flex-start;
+        }
+
+        .outgoing {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        /* Style the input container */
+        .input-container {
+            display: flex;
+            margin-top: 200px;
+            max-width: 530px;
+            margin-left: 10%;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .input-container button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex; height: 100%;">
+        <div id="sidebar">
+            <label for="images" class="drop-container" id="dropcontainer">
+                <span class="drop-title">New Chat</span>
+                Drop PDF here
+                <input type="file" id="images" accept=".pdf" required>
+            </label>
+            <br>
+            <a href="#" class="pdf-link" id="pdf1">output.pdf</a>
+            <a href="#" class="pdf-link" id="pdf2">test.pdf</a>
+            <!-- <a href="#" class="pdf-link" id="pdf3">PDF 3</a>
+            <a href="#" class="pdf-link" id="pdf4">PDF 4</a> -->
+            <!-- Add more PDF links here -->
+        </div>
+        <div class="pdf">
+            <h3 style="margin-left: 20px;">output.pdf</h3>
+            <div id="pdf-container"></div>
+        </div>
+        <div class="vertical-line"></div>
+        <div class="chats">
+            <div class="chat-container">
+                <div class="chat" id="chat-messages">
+                    <div class="message incoming">
+                        <p>Hello, how can I help you?</p>
+                    </div>
+                    <!-- Add more messages here -->
+                </div>
+            </div>
+            <div class="input-container">
+                <input id="user-message" type="text" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // JavaScript code to handle PDF link click and styling
+        const pdfLinks = document.querySelectorAll('.pdf-link');
+
+        pdfLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                // Reset the styling of all links
+                pdfLinks.forEach(pdfLink => {
+                    pdfLink.classList.remove('active');
+                });
+
+                // Apply styling to the clicked link
+                link.classList.add('active');
+            });
+        });
+    </script>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.worker.js"></script>
+    <script>
+        // Function to render PDF into the specified container
+        function renderPDF(url, canvasContainer) {
+            // Initialize PDF.js
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+            // Asynchronous function to load the PDF file
+            async function loadPdf() {
+                // Fetch the PDF file
+                const loadingTask = pdfjsLib.getDocument(url);
+
+                try {
+                    // Get the PDF document
+                    const pdfDocument = await loadingTask.promise;
+
+                    // Loop through each page and render it on a canvas
+                    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                        const page = await pdfDocument.getPage(pageNum);
+                        const canvas = document.createElement('canvas');
+                        const canvasContext = canvas.getContext('2d');
+                        canvasContainer.appendChild(canvas);
+
+                        // Set canvas size (original size of the PDF page)
+                        const viewport = page.getViewport({ scale: 1 });
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        // Render PDF page to canvas
+                        await page.render({ canvasContext, viewport }).promise;
+                    }
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                }
+            }
+
+            // Call the loadPdf function
+            loadPdf();
+        }
+
+        // Call the renderPDF function with the URL of the PDF file and the container
+        renderPDF('/static/output.pdf', document.getElementById('pdf-container'));
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const chatMessages = document.getElementById("chat-messages");
+            const userMessageInput = document.getElementById("user-message");
+            const sendButton = document.getElementById("send-button");
+
+            sendButton.addEventListener("click", () => {
+                const userMessage = userMessageInput.value.trim();
+                if (userMessage !== "") {
+                    // Display the user message
+                    displayMessage(userMessage, "outgoing");
+
+                    // Send the user message to the server
+                    sendUserMessage(userMessage);
+
+                    // Clear the input field
+                    userMessageInput.value = "";
+                }
+            });
+
+            function displayMessage(message, type) {
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "message " + type;
+                messageDiv.innerHTML = "<p>" + message + "</p>";
+                chatMessages.appendChild(messageDiv);
+
+                // Scroll to the bottom to show the latest message
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function sendUserMessage(message) {
+                // Send an AJAX request to the Flask server
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/get", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        // Display the chatbot's response
+                        displayMessage(xhr.responseText, "incoming");
+                    }
+                };
+
+                const data = JSON.stringify({ message: message });
+                xhr.send(data);
+            }
+        });
+
+    </script>
+</body>
+
+
+</html>
